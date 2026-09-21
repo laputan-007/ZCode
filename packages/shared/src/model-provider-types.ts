@@ -79,3 +79,45 @@ export type ModelConnectivityResult =
         readonly code?: "provider-unavailable" | "model-unavailable";
       };
     };
+
+/** 远程模型清单里的一条候选。只保留 `/v1/models` 实际返回的展示性字段。 */
+export interface RemoteModelListEntry {
+  readonly id: string;
+  readonly ownedBy?: string;
+  readonly created?: number;
+}
+
+/**
+ * 远程模型清单探测的失败归因。
+ * 结构化 code 供 UI 映射本地化文案；不依赖 message 文本做流程判断。
+ */
+export type RemoteModelListErrorCode =
+  /** Effective Config 没有可用 Base URL，或无法解析成 http(s) 端点。 */
+  | "base-url-missing"
+  /** 账号类 Provider 没有用户可填的 Key，不猜凭证。 */
+  | "unsupported-access"
+  /** Provider 不存在、已停用，或 API 协议类型尚未配置完整。 */
+  | "provider-unavailable"
+  /** 当前 Environment 未装配探测能力，或远程 Environment 版本较旧没有该方法。 */
+  | "capability-unavailable"
+  | "http-error"
+  | "invalid-response"
+  | "network-error"
+  | "timeout";
+
+/** 一次远程模型清单探测的结果。失败也走结构化返回，不向 Renderer 抛异常。 */
+export type RemoteModelListResult =
+  | {
+      readonly success: true;
+      /** 实际请求的端点，供 UI 展示"从哪个地址取到的"。 */
+      readonly endpoint: string;
+      readonly models: readonly RemoteModelListEntry[];
+    }
+  | {
+      readonly success: false;
+      readonly error: {
+        readonly message: string;
+        readonly code: RemoteModelListErrorCode;
+        readonly status?: number;
+      };
+    };

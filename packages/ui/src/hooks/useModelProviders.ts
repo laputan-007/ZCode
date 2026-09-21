@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useRef } from "react";
 import type { ProviderSettingsFormProvider } from "@/lib/providerSettingsFormTypes.js";
-import type { ModelConnectivityResult } from "@zcode/shared";
+import type { ModelConnectivityResult, RemoteModelListResult } from "@zcode/shared";
 import type { ProviderSettingsView } from "@zcode/services";
 import { useServices } from "@/hooks/useServices.js";
 import { logger } from "@/logger.js";
@@ -211,6 +211,26 @@ export function useModelProviders(target: {
     ],
   );
 
+  const fetchRemoteModelList = useCallback(
+    async (providerId: string): Promise<RemoteModelListResult> => {
+      try {
+        return await providerSettingsService.fetchRemoteModelList({ providerId });
+      } catch (error) {
+        // 远程 Environment 可能运行较旧版本的 Server，代理调用会因 method-not-found 而 reject。
+        // 在 Hook 边界归一化成结构化失败，不让异常冒到设置页把整块 UI 打崩。
+        logger.warn("[useModelProviders] 获取远程模型列表失败", error);
+        return {
+          success: false,
+          error: {
+            code: "capability-unavailable",
+            message: error instanceof Error ? error.message : String(error),
+          },
+        };
+      }
+    },
+    [providerSettingsService],
+  );
+
   return {
     modelProviders: effectiveModelProviders,
     providerTemplates: providerSettingsView?.providerTemplates ?? [],
@@ -232,6 +252,7 @@ export function useModelProviders(target: {
     reorderProviderModels,
     saveDisplayOrder,
     testModelConnectivity,
+    fetchRemoteModelList,
     providerSettingsView,
   };
 }

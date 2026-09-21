@@ -2854,6 +2854,31 @@ const zhCN: Record<string, string> = {
   "settings.modelProvider.models": "模型列表",
   "settings.modelProvider.modelsEmpty": "当前没有配置模型，添加模型后可在聊天中使用。",
   "settings.modelProvider.addModel": "添加模型",
+  "settings.modelProvider.remoteModels.title": "远程模型清单",
+  "settings.modelProvider.remoteModels.description":
+    "从 Base URL 的 /v1/models 接口读取可用模型，勾选后批量添加。",
+  "settings.modelProvider.remoteModels.fetch": "获取模型列表",
+  "settings.modelProvider.remoteModels.fetching": "正在获取",
+  "settings.modelProvider.remoteModels.addSelected": "添加所选（{count}）",
+  "settings.modelProvider.remoteModels.alreadyAdded": "已添加",
+  "settings.modelProvider.remoteModels.selectAll": "全选",
+  "settings.modelProvider.remoteModels.clearAll": "取消全选",
+  "settings.modelProvider.remoteModels.selectionCount": "已选 {selected}/{total}",
+  "settings.modelProvider.remoteModels.partialSuccess":
+    "已添加 {succeeded}/{total} 个模型，在 {modelId} 处中断",
+  "settings.modelProvider.remoteModels.error.baseUrlMissing":
+    "Base URL 不可用，无法获取模型列表。{detail}",
+  "settings.modelProvider.remoteModels.error.unsupportedAccess":
+    "该供应商使用账号登录，不支持用 API Key 获取模型列表。{detail}",
+  "settings.modelProvider.remoteModels.error.providerUnavailable":
+    "该供应商当前不可用，无法获取模型列表。{detail}",
+  "settings.modelProvider.remoteModels.error.capabilityUnavailable":
+    "当前环境不支持获取远程模型列表。{detail}",
+  "settings.modelProvider.remoteModels.error.http": "接口返回错误。{detail}",
+  "settings.modelProvider.remoteModels.error.invalidResponse":
+    "接口返回的内容不是有效的模型列表。{detail}",
+  "settings.modelProvider.remoteModels.error.network": "无法连接到接口地址。{detail}",
+  "settings.modelProvider.remoteModels.error.timeout": "请求超时，请稍后重试。{detail}",
   "settings.modelProvider.modelId": "模型 ID",
   "settings.modelProvider.modelDisplayName": "显示名称",
   "settings.modelProvider.modelApiFormat.anthropic": "Anthropic Messages",

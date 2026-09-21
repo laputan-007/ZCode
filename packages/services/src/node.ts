@@ -378,6 +378,7 @@ import {
   IProviderSettingsService,
 } from "./model-provider/providerFacadeServices.js";
 import { createProviderSettingsConnectivityTester } from "./model-provider/providerSettingsConnectivity.js";
+import { createProviderRemoteModelListFetcher } from "./model-provider/providerRemoteModelList.js";
 import {
   createProviderProvisioningSource,
   listProviderProvisioningCredentialKeys,
@@ -1625,6 +1626,10 @@ export function createLocalServices(options: {
         return providerConnectivityAgentService.testModelConnectivity(input);
       },
     }),
+    // 远程模型清单只是一次普通 HTTPS GET，不属于 LLM 执行面（对比 testConnectivity 必须走 Agent），
+    // 因此在当前 Environment 内直接发请求：本地 Host、Web Server 与远程 Host 共用这一份实现。
+    // 网络出口复用统一 apiClient（host transport + 超时/错误归一化），不另开 fetch 路径。
+    fetchRemoteModelList: createProviderRemoteModelListFetcher({ apiClient }),
     disposeAccountSource: () => {
       disposeAccountProviderInvalidation();
       accountProviderRefreshErrorDispose();

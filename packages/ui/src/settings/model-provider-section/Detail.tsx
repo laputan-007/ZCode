@@ -12,6 +12,7 @@ import {
   resolveModelProviderFamilySpecByProviderId,
   type ModelConnectivityResult,
   type OAuthProviderId,
+  type RemoteModelListResult,
 } from "@zcode/shared";
 import {
   getProviderFormApiKeyManagementUrl,
@@ -244,6 +245,7 @@ export function ModelProviderSectionDetail({
   onDelete,
   onReorderProviderModels,
   onTestModel,
+  onFetchRemoteModelList,
   onCodingPlanLogin,
   onRetryCodingPlan,
   onCodingPlanDisconnect,
@@ -283,6 +285,8 @@ export function ModelProviderSectionDetail({
   onDelete: (provider: ProviderSettingsFormProvider) => Promise<void>;
   onReorderProviderModels?: (providerId: string, modelIds: string[]) => Promise<void>;
   onTestModel: (providerId: string, modelId: string) => Promise<ModelConnectivityResult>;
+  /** 远程模型清单探测；未装配时「添加模型」弹窗不显示该入口。 */
+  onFetchRemoteModelList?: (providerId: string) => Promise<RemoteModelListResult>;
   onRetryCodingPlan?: () => void | Promise<void>;
   onCodingPlanLogin: (
     presetId: BuiltinModelProviderId,
@@ -426,6 +430,7 @@ export function ModelProviderSectionDetail({
               : undefined
           }
           onTestModel={onTestModel}
+          onFetchRemoteModelList={onFetchRemoteModelList}
           readOnlyEndpoints
           // 预置供应商名称承载固定 API Key 入口语义，
           // 允许重命名会让侧边栏和模型选择器展示含义不一致，因此只允许自定义供应商改名。
@@ -706,6 +711,7 @@ export function ModelProviderSectionDetail({
                 : undefined
             }
             onTestModel={onTestModel}
+            onFetchRemoteModelList={onFetchRemoteModelList}
             nameEditable={false}
             statusSection={
               <div className="space-y-3">
@@ -853,6 +859,7 @@ export function ModelProviderSectionDetail({
           : undefined
       }
       onTestModel={onTestModel}
+      onFetchRemoteModelList={onFetchRemoteModelList}
       presetApiKeyUrl={customApiKeyUrl}
       readOnlyEndpoints={false}
       nameEditable

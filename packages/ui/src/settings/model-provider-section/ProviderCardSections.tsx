@@ -11,7 +11,7 @@ import type {
   ProviderSettingsFormProvider,
   ProviderSettingsFormModel,
 } from "@/lib/providerSettingsFormTypes.js";
-import type { ModelConnectivityResult } from "@zcode/shared";
+import type { ModelConnectivityResult, RemoteModelListResult } from "@zcode/shared";
 import type { ProviderApiType } from "@zcode/provider";
 import {
   TID_MODEL_PROVIDER_ADD_MODEL_BUTTON,
@@ -40,6 +40,7 @@ import { ModelRowInput } from "./ProviderFormControls.js";
 import { PresetProviderApiKeyBanner } from "./PresetProviderApiKeyBanner.js";
 import { type ProviderModelDraftValues } from "@/settings/model-provider-section/ProviderModelMetadata.js";
 import { ProviderModelMetadataDialog } from "@/settings/model-provider-section/ProviderModelMetadataDialog.js";
+import { ProviderRemoteModelListPicker } from "@/settings/model-provider-section/ProviderRemoteModelListPicker.js";
 import {
   ProviderApiFormatSelect,
   resolveProviderConnectionApiFormatDisplayLabel,
@@ -354,6 +355,8 @@ export function ProviderModelsSection({
   onModelEnabledChange,
   onDeleteModel,
   onAddModel,
+  onAddModels,
+  onFetchRemoteModelList,
   onReorderModelIds,
   settingsRevision = 0,
 }: {
@@ -371,6 +374,10 @@ export function ProviderModelsSection({
   onDeleteModel: (modelId: string) => void;
   onModelEnabledChange?: (modelId: string, enabled: boolean) => void | Promise<void>;
   onAddModel: (model: ProviderSettingsFormModel) => void | Promise<void>;
+  /** 批量添加远程清单里勾选的模型；串行写入，单条失败即中断。 */
+  onAddModels?: (modelIds: string[]) => Promise<void>;
+  /** 按 Provider Effective Config 的 Base URL 探测远程模型清单。 */
+  onFetchRemoteModelList?: (providerId: string) => Promise<RemoteModelListResult>;
   onReorderModelIds?: (modelIds: string[]) => void;
   settingsRevision?: number;
 }) {
@@ -463,24 +470,35 @@ export function ProviderModelsSection({
         id: `settings.modelProvider.modelMetadata.invalid.${addDraftErrorField}`,
       })
     : null;
-
   return (
     <div>
       <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
         <span className="text-ui-base text-foreground-subtle">
           {intl.formatMessage({ id: "settings.modelProvider.models" })}
         </span>
-        <Button
-          type="button"
-          variant="secondary"
-          size="default"
-          className="rounded-lg"
-          data-testid={TID_MODEL_PROVIDER_ADD_MODEL_BUTTON}
-          onClick={openAddDialog}
-        >
-          <Plus data-icon="inline-start" aria-hidden="true" />
-          {intl.formatMessage({ id: "settings.modelProvider.addModel" })}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* 探测与批量写入两条能力缺一就不渲染入口，避免留下点了没反应的死按钮。 */}
+          {onFetchRemoteModelList && onAddModels ? (
+            <ProviderRemoteModelListPicker
+              providerId={providerId}
+              existingModelIds={models.map((model) => model.modelId)}
+              onFetch={onFetchRemoteModelList}
+              onPick={onAddModels}
+              disabled={addSaving}
+            />
+          ) : null}
+          <Button
+            type="button"
+            variant="secondary"
+            size="default"
+            className="rounded-lg"
+            data-testid={TID_MODEL_PROVIDER_ADD_MODEL_BUTTON}
+            onClick={openAddDialog}
+          >
+            <Plus data-icon="inline-start" aria-hidden="true" />
+            {intl.formatMessage({ id: "settings.modelProvider.addModel" })}
+          </Button>
+        </div>
       </div>
       {models.length > 0 ? (
         <div className="overflow-hidden rounded-lg border border-input-border bg-input">

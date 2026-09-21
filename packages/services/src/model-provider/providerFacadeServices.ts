@@ -1,6 +1,7 @@
 import type { Event } from "@zcode/rpc";
 import { ServiceChannels } from "@zcode/shared";
 import {
+  isApiKeyAccess,
   type ModelConfigObject,
   type ModelId,
   type ModelSelection,
@@ -17,8 +18,13 @@ import {
   type SavePersonalModelDraftInput,
 } from "@zcode/provider";
 import { createServiceDescriptor } from "../descriptors.js";
-import type { ModelConnectivityResult } from "@zcode/shared";
+import type {
+  ModelConnectivityResult,
+  RemoteModelListErrorCode,
+  RemoteModelListResult,
+} from "@zcode/shared";
 import { createServiceLogger } from "../logger/serviceLogger.js";
+import type { ProviderRemoteModelListFetcher } from "./providerRemoteModelList.js";
 
 export type {
   ProviderSettingsProviderView,
@@ -68,6 +74,11 @@ export interface IProviderSettingsService {
   testModelConnectivity(
     input: ProviderSettingsConnectivityRequest,
   ): Promise<ModelConnectivityResult>;
+  /**
+   * 按 Provider Effective Config 的 Base URL 拉取远程模型清单，供「添加模型」多选。
+   * 只读探测：不写配置，因此也不等待 provider 操作完成。
+   */
+  fetchRemoteModelList(input: ProviderRemoteModelListRequest): Promise<RemoteModelListResult>;
 }
 
 export const IProviderSettingsService = createServiceDescriptor<IProviderSettingsService>(
@@ -92,6 +103,10 @@ export type ProviderSettingsConnectivityTester = (
   input: ProviderSettingsConnectivityTestInput,
 ) => Promise<ModelConnectivityResult>;
 
+export interface ProviderRemoteModelListRequest {
+  readonly providerId: ProviderId;
+}
+
 export interface IModelSelectionService {
   readonly onDidChange: Event<ModelSelectionView>;
   getView(input?: ModelSelectionViewInput): Promise<ModelSelectionView>;
@@ -110,6 +125,7 @@ export function createProviderSettingsService(
   facade: ProviderSettingsFacade,
   ensureReady: () => Promise<void> = async () => {},
   testConnectivity?: ProviderSettingsConnectivityTester,
+  fetchRemoteModelList?: ProviderRemoteModelListFetcher,
 ): IProviderSettingsService {
   return {
     onDidChange: toEvent((listener) => facade.onDidChange(listener)),
@@ -206,6 +222,54 @@ export function createProviderSettingsService(
         modelId: input.modelId,
       });
     },
+    fetchRemoteModelList: async (input) => {
+      await ensureReady();
+      if (!fetchRemoteModelList) {
+        return remoteModelListFailure(
+          "capability-unavailable",
+          "The current environment does not provide remote model list probing.",
+        );
+      }
+      // 只读探测：Base URL / Key / headers / API 协议全部取 Effective Config，
+      // 不接受 Renderer 传值，避免出现第二份配置真相。
+      const provider = facade
+        .getView()
+        .providers.find((item) => item.providerId === input.providerId);
+      if (!provider || !provider.enabled) {
+        return remoteModelListFailure(
+          "provider-unavailable",
+          "This provider is currently unavailable for fetching models.",
+        );
+      }
+      const api = provider.effectiveConfig.api;
+      const access = provider.effectiveConfig.access;
+      const baseUrl = api?.baseUrl?.trim() ?? "";
+      if (!baseUrl) {
+        return remoteModelListFailure(
+          "base-url-missing",
+          "This provider has no Base URL configured yet.",
+        );
+      }
+      if (!api?.type) {
+        return remoteModelListFailure(
+          "provider-unavailable",
+          "This provider has no API format configured yet.",
+        );
+      }
+      // 账号类 Provider 的凭证由 OAuth/权益链解析，不能在探测边界凭猜测构造 header。
+      if (!access || !isApiKeyAccess(access)) {
+        return remoteModelListFailure(
+          "unsupported-access",
+          "This provider does not expose an API key for fetching models.",
+        );
+      }
+      return fetchRemoteModelList({
+        apiType: api.type,
+        baseUrl,
+        headers: api.headers ?? null,
+        apiKey: access.apiKey ?? null,
+      });
+    },
   };
 }
 
@@ -261,6 +325,13 @@ export function createModelSelectionService(
       listeners.clear();
     },
   };
+}
+
+function remoteModelListFailure(
+  code: RemoteModelListErrorCode,
+  message: string,
+): RemoteModelListResult {
+  return { success: false, error: { code, message } };
 }
 
 function toEvent<T>(subscribe: (listener: (event: T) => void) => () => void): Event<T> {

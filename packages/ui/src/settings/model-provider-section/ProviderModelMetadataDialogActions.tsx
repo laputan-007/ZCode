@@ -86,6 +86,8 @@ export function ProviderModelMetadataDialogActions({
   onSave,
   onCancel,
   leadingAction,
+  saveDisabled = false,
+  saveTestId,
 }: {
   saveLabel: string;
   cancelLabel: string;
@@ -93,15 +95,26 @@ export function ProviderModelMetadataDialogActions({
   onSave: () => void;
   onCancel: () => void;
   leadingAction?: ReactNode;
+  /** 提交按钮的额外禁用条件（例如尚未勾选任何候选）。 */
+  saveDisabled?: boolean;
+  saveTestId?: string;
 }) {
   return (
-    <div data-model-settings-footer="true" className="flex items-center justify-between gap-2 pt-1">
-      {leadingAction}
+    <div data-model-settings-footer="true" className="flex items-center justify-end gap-2 pt-1">
+      {/* 没有 leadingAction 时按钮组也要靠右：justify-between 只剩一个子元素会把它推到左侧。 */}
+      {leadingAction ? <div className="mr-auto flex">{leadingAction}</div> : null}
       <div className="flex items-center gap-2">
         <Button type="button" variant="ghost" size="lg" disabled={saving} onClick={onCancel}>
           {cancelLabel}
         </Button>
-        <Button type="button" variant="default" size="lg" disabled={saving} onClick={onSave}>
+        <Button
+          type="button"
+          variant="default"
+          size="lg"
+          disabled={saving || saveDisabled}
+          {...(saveTestId ? { "data-testid": saveTestId } : {})}
+          onClick={onSave}
+        >
           {saving ? <Loader2Icon className="size-3.5 animate-spin" aria-hidden="true" /> : null}
           {saveLabel}
         </Button>

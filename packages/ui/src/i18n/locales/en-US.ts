@@ -3047,6 +3047,32 @@ const enUS: Record<string, string> = {
   "settings.modelProvider.models": "Model list",
   "settings.modelProvider.modelsEmpty": "No models are configured. Add a model to use it in chat.",
   "settings.modelProvider.addModel": "Add model",
+  "settings.modelProvider.remoteModels.title": "Remote model list",
+  "settings.modelProvider.remoteModels.description":
+    "Reads available models from the /v1/models endpoint of the Base URL. Select the ones to add.",
+  "settings.modelProvider.remoteModels.fetch": "Fetch models",
+  "settings.modelProvider.remoteModels.fetching": "Fetching",
+  "settings.modelProvider.remoteModels.addSelected": "Add selected ({count})",
+  "settings.modelProvider.remoteModels.alreadyAdded": "Added",
+  "settings.modelProvider.remoteModels.selectAll": "Select all",
+  "settings.modelProvider.remoteModels.clearAll": "Clear all",
+  "settings.modelProvider.remoteModels.selectionCount": "{selected}/{total} selected",
+  "settings.modelProvider.remoteModels.partialSuccess":
+    "Added {succeeded} of {total} models; stopped at {modelId}",
+  "settings.modelProvider.remoteModels.error.baseUrlMissing":
+    "Base URL is unavailable, so models cannot be fetched. {detail}",
+  "settings.modelProvider.remoteModels.error.unsupportedAccess":
+    "This provider signs in with an account and cannot fetch models with an API key. {detail}",
+  "settings.modelProvider.remoteModels.error.providerUnavailable":
+    "This provider is currently unavailable for fetching models. {detail}",
+  "settings.modelProvider.remoteModels.error.capabilityUnavailable":
+    "Fetching remote models is not supported in this environment. {detail}",
+  "settings.modelProvider.remoteModels.error.http": "The endpoint returned an error. {detail}",
+  "settings.modelProvider.remoteModels.error.invalidResponse":
+    "The endpoint did not return a valid model list. {detail}",
+  "settings.modelProvider.remoteModels.error.network": "Cannot reach the endpoint. {detail}",
+  "settings.modelProvider.remoteModels.error.timeout":
+    "The request timed out. Try again later. {detail}",
   "settings.modelProvider.modelId": "Model ID",
   "settings.modelProvider.modelDisplayName": "Display name",
   "settings.modelProvider.modelApiFormat.anthropic": "Anthropic messages",

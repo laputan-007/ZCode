@@ -6,7 +6,7 @@ import {
   type ProviderSettingsFormProvider,
   type ProviderSettingsFormModel,
 } from "@/lib/providerSettingsFormTypes.js";
-import type { ModelConnectivityResult } from "@zcode/shared";
+import type { ModelConnectivityResult, RemoteModelListResult } from "@zcode/shared";
 import {
   isApiKeyAccess,
   type ProviderApiType,
@@ -144,6 +144,7 @@ export function InlineEditableProviderCard({
   onDeletePersonalModel,
   onDelete,
   onTestModel,
+  onFetchRemoteModelList,
   onReorderModelIds,
   readOnlyEndpoints,
   presetApiKeyUrl,
@@ -171,6 +172,8 @@ export function InlineEditableProviderCard({
   onDeletePersonalModel?: (providerId: string, modelId: string) => Promise<unknown>;
   onDelete?: () => void | Promise<void>;
   onTestModel?: (providerId: string, modelId: string) => Promise<ModelConnectivityResult>;
+  /** 探测远程模型清单；未装配时「添加模型」弹窗不显示该入口。 */
+  onFetchRemoteModelList?: (providerId: string) => Promise<RemoteModelListResult>;
   onReorderModelIds?: (modelIds: string[]) => Promise<void>;
   readOnlyEndpoints?: boolean;
   presetApiKeyUrl?: string;
@@ -725,6 +728,58 @@ export function InlineEditableProviderCard({
     [onAddPersonalModel, provider.providerId, runSaveOperation],
   );
 
+  const handleFetchRemoteModelList = useCallback(
+    async (targetProviderId: string): Promise<RemoteModelListResult> => {
+      if (!onFetchRemoteModelList) {
+        return {
+          success: false,
+          error: {
+            code: "capability-unavailable",
+            message: "Remote model list probing is not available in this settings entry.",
+          },
+        };
+      }
+      // 探测读的是 Effective Config：Base URL / Key 刚输入还没落盘时会读到旧值。
+      // 与连接测试同理，先 flush 本卡片唯一的 Provider 草稿再发请求。
+      await commitPendingDraft("remote-model-list");
+      return onFetchRemoteModelList(targetProviderId);
+    },
+    [commitPendingDraft, onFetchRemoteModelList],
+  );
+
+  const handleAddModels = useCallback(
+    async (modelIds: string[]) => {
+      if (!onAddPersonalModel) throw new Error("当前设置入口未装配 Personal Model 添加能力");
+      const pendingIds = modelIds.map((modelId) => modelId.trim()).filter(Boolean);
+      if (pendingIds.length === 0) return;
+      let succeeded = 0;
+      // 整批共用一次保存通知：逐条走 runSaveOperation 会为每个模型各弹一条 toast。
+      // draftOwnsRetry 让重试归属弹窗内的清单组件，不再另起一次脱离编辑事务的保存。
+      await runSaveOperation(
+        async () => {
+          for (const modelId of pendingIds) {
+            try {
+              // 空 personalConfig + 不指定 useRecommendedConfig = 与手工「添加模型」直接保存等价，
+              // 沿用智能推荐配置，不新增第二条写入路径。
+              await onAddPersonalModel(provider.providerId, modelId, {}, undefined);
+              succeeded += 1;
+            } catch (error) {
+              // 串行中断：已写入的不回滚（按 modelId 覆盖是幂等的），把进度带进错误信息供重试。
+              const reason = error instanceof Error ? error.message : String(error);
+              const progress = intl.formatMessage(
+                { id: "settings.modelProvider.remoteModels.partialSuccess" },
+                { succeeded, total: pendingIds.length, modelId },
+              );
+              throw new Error(`${progress}: ${reason}`);
+            }
+          }
+        },
+        { draftOwnsRetry: true },
+      );
+    },
+    [intl, onAddPersonalModel, provider.providerId, runSaveOperation],
+  );
+
   const handleReorderModelIds = useCallback(
     (modelIds: string[]) => {
       if (!onReorderModelIds) return;
@@ -848,6 +903,12 @@ export function InlineEditableProviderCard({
           providerAccess={provider.config.access}
           models={models}
           onTestModel={onTestModel ? handleTestModel : undefined}
+          // 账号类 Provider 的凭证由 OAuth/权益链解析，探测边界拿不到 Key；
+          // 与其显示一个必然失败的按钮，不如不渲染入口。
+          onFetchRemoteModelList={
+            onFetchRemoteModelList && !isAccountProvider ? handleFetchRemoteModelList : undefined
+          }
+          onAddModels={onAddPersonalModel ? handleAddModels : undefined}
           onModelCommit={handleModelCommit}
           onModelEnabledChange={handleModelEnabledChange}
           onDeleteModel={handleDeleteModel}
