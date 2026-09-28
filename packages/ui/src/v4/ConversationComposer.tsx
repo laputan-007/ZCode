@@ -169,7 +169,6 @@ import type { ConversationPromptTelemetrySeed } from "@/v4/telemetry/conversatio
 import type { ComposerSubmissionConfig } from "@/v4/composer/composerSubmissionConfig.js";
 import { buildV4ConversationPromptTelemetryExtraDetail } from "@/v4/telemetry/conversationPromptTelemetry.js";
 import { resolveAttachableShareContext } from "@/lib/conversationShareContext.js";
-import { ComposerMcpSelector } from "@/v4/composer/ComposerMcpSelector.js";
 
 const MODEL_SELECTION_LOADING_STATE: ModelSelectionState = { status: "loading" };
 
@@ -1687,12 +1686,6 @@ function ConversationComposerImpl({
       ),
     [composerAttachments],
   );
-  const mcpSelectorNode = useMemo(
-    () => (
-      <ComposerMcpSelector workspacePath={workspacePath} workspaceIdentity={workspaceIdentity} />
-    ),
-    [workspacePath, workspaceIdentity],
-  );
   const topContentNode = useMemo(() => {
     if (
       composerAttachments.length === 0 &&
@@ -2253,8 +2246,6 @@ function ConversationComposerImpl({
             })}
           </div>
         ) : null}
-        {/* MCP 快捷条在输入壳之外、紧贴其上方，避免被误读成输入卡标题栏。 */}
-        {mcpSelectorNode}
         <ChatPromptEditor
           workspacePath={workspacePath}
           workspaceIdentity={workspaceIdentity}
