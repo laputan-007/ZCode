@@ -21,7 +21,7 @@ import {
   TID_MODEL_PROVIDER_NAME_EDIT_BUTTON,
   TID_MODEL_PROVIDER_NAME_INPUT,
   testId,
-} from "@zcode/shared";
+} from "@zcode/shared/test-ids";
 import { InfoIcon, LockKeyholeIcon, Plus, Pencil, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { Input } from "@/components/ui/input.js";
@@ -42,6 +42,7 @@ import { type ProviderModelDraftValues } from "@/settings/model-provider-section
 import { ProviderModelMetadataDialog } from "@/settings/model-provider-section/ProviderModelMetadataDialog.js";
 import { ProviderRemoteModelListPicker } from "@/settings/model-provider-section/ProviderRemoteModelListPicker.js";
 import {
+  PROVIDER_CONNECTION_API_FORMATS,
   ProviderApiFormatSelect,
   resolveProviderConnectionApiFormatDisplayLabel,
 } from "@/settings/model-provider-section/ProviderApiFormatSelect.js";
@@ -50,13 +51,19 @@ import { useProviderModelDraft } from "@/settings/model-provider-section/useProv
 import { ProviderLogo } from "@/settings/model-provider-section/ProviderLogo.js";
 import type { ProviderConfigObject } from "@zcode/provider";
 
-export { formatModelContextWindowLabel } from "@/lib/tokenNumberFormat.js";
 export {
   resolveProviderConnectionApiFormatDisplayLabel,
   resolveProviderConnectionApiFormatOptions,
 } from "@/settings/model-provider-section/ProviderApiFormatSelect.js";
+export { formatModelContextWindowLabel } from "@/lib/tokenNumberFormat.js";
 
-function shouldShowProviderApiFormat(
+export function resolveProviderApiFormatOptions(
+  _provider: Pick<ProviderSettingsFormProvider, "config" | "models">,
+): ProviderApiType[] {
+  return [...PROVIDER_CONNECTION_API_FORMATS];
+}
+
+export function shouldShowProviderApiFormat(
   _provider: Pick<ProviderSettingsFormProvider, "providerId">,
 ): boolean {
   return true;
